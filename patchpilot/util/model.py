@@ -180,6 +180,8 @@ class OpenAIChatDecoder(DecoderBase):
             del kwargs["port"]
         if "ip" in kwargs:
             del kwargs["ip"]
+        if "reasoning_mode" in kwargs:
+            del kwargs["reasoning_mode"]
 
         if self.temperature == 0:
             assert num_samples == 1
