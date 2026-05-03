@@ -113,6 +113,7 @@ def localize_instance(
             args.match_partial_paths,
             args.temperature,
             port=args.port,
+            ip=args.ip,
         )
         search_str_with_file = fl.search_in_problem_statement(reproduce_info)
     # file level localization
@@ -128,6 +129,7 @@ def localize_instance(
             args.match_partial_paths,
             args.temperature,
             port=args.port,
+            ip=args.ip,
         )
         found_files, additional_artifact_loc_file, file_traj, raw_trajs, message = fl.localize(
             mock=args.mock,
@@ -154,7 +156,8 @@ def localize_instance(
             logger,
             args.match_partial_paths,
             args.temperature,
-            port=args.port
+            port=args.port,
+            ip=args.ip,
         )
         (
             found_edit_locs,
@@ -192,6 +195,7 @@ def localize_instance(
                     args.match_partial_paths,
                     args.temperature,
                     port=args.port,
+                    ip=args.ip,
                 )
                 additional_artifact_loc_related = []
                 found_related_locs = []
@@ -231,6 +235,7 @@ def localize_instance(
             args.match_partial_paths,
             args.temperature,
             port=args.port,
+            ip=args.ip,
         )
         (
             found_edit_locs,
