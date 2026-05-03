@@ -158,45 +158,42 @@ def fake_git_repo(repo_playground, file_pathes, old_contents, new_contents) -> s
     os.makedirs(repo_playground)
 
     # create a fake git repo
-    subprocess.run(["git", "-C", repo_playground, "init"])
+    subprocess.run(f"cd {repo_playground} && git init", shell=True)
 
     for file_path, old_content, new_content in zip(
         file_pathes, old_contents, new_contents
     ):
-        target_path = os.path.join(repo_playground, file_path)
-        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+        # create a file
+        subprocess.run(
+            f"mkdir -p {repo_playground}/{os.path.dirname(file_path)}", shell=True
+        )
 
-        with open(target_path, "w") as f:
+        with open(f"{repo_playground}/{file_path}", "w") as f:
             f.write(old_content)
 
         # add file to git
         # same message is okay
         subprocess.run(
-            ["git", "-C", repo_playground, "add", file_path],
-        )
-        subprocess.run(
-            ["git", "-C", repo_playground, "commit", "-m", "initial commit"],
+            f"cd {repo_playground} && git add {file_path} && git commit -m 'initial commit'",
+            shell=True,
         )
 
     for file_path, old_content, new_content in zip(
         file_pathes, old_contents, new_contents
     ):
         # edit file
-        target_path = os.path.join(repo_playground, file_path)
-        os.makedirs(os.path.dirname(target_path), exist_ok=True)
-        with open(target_path, "w") as f:
+        with open(f"{repo_playground}/{file_path}", "w") as f:
             f.write(new_content)
 
     # get git diff
     o = subprocess.run(
-        ["git", "-C", repo_playground, "diff", "."], capture_output=True
+        f"cd {repo_playground} && git diff .", shell=True, capture_output=True
     )
 
     s = o.stdout.decode("utf-8")
 
     # remove playground
-    import shutil
-    shutil.rmtree(repo_playground, ignore_errors=True)
+    subprocess.run(f"rm -rf {repo_playground}", shell=True)
 
     return s
 
@@ -435,19 +432,12 @@ def normalize_patch(
 
 
 def extract_python_blocks(text):
-    pattern = (
-        r"(?:<<<\s*MODIFIED FILE:\s*(.*?)\s*>>>\s*)?"
-        r"```python\n(.*?)(?:\n```|(?=\n<<<\s*END MODIFIED FILE\s*>>>))"
-    )
+    # Regular expression pattern to match ```python\n{text}\n```
+    pattern = r"```python\n(.*?)\n```"
 
-    matches = []
-    for match in re.finditer(pattern, text, re.DOTALL | re.IGNORECASE):
-        file_name, block = match.groups()
-        if file_name and "<<<<<<< SEARCH" in block:
-            prefix = block.split("<<<<<<< SEARCH", 1)[0]
-            if file_name.strip() not in prefix:
-                block = file_name.strip() + "\n" + block
-        matches.append(block)
+    # Use re.findall to find all matches
+    matches = re.findall(pattern, text, re.DOTALL)
+
     return matches
 
 

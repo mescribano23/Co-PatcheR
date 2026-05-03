@@ -349,20 +349,6 @@ def transfer_arb_locs_to_locs(
                     print(f"loc {loc} not recognised")
                 # assert False
 
-    for file_content in files:
-        if file_content[0] == pred_file:
-            content = file_content[1]
-            break
-
-    # Discard impossible intervals instead of producing empty file context.
-    valid_line_loc = []
-    for start, end in line_loc:
-        start = max(start, 1)
-        end = min(end, len(content))
-        if start <= end:
-            valid_line_loc.append((start, end))
-    line_loc = valid_line_loc
-
     # Fine-grained-only loc: Remove intervals that are supersets of another.
     if fine_grain_only:
         filtered_line_loc = []
@@ -378,6 +364,11 @@ def transfer_arb_locs_to_locs(
     # compute max min
     # TODO: think of strategies to do bunched up lines
     # TODO: e.g., we can have multiple code segments (right now, its just one)
+
+    for file_content in files:
+        if file_content[0] == pred_file:
+            content = file_content[1]
+            break
 
     if len(line_loc) == 0:
         return [], [], [], []

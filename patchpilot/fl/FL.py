@@ -352,7 +352,6 @@ class: MyClass5
             match_partial_paths,
             temperature,
             port=2951,
-            ip="0.0.0.0",
     ):
         super().__init__(instance_id, structure, problem_statement)
         self.max_tokens = 4240
@@ -362,7 +361,6 @@ class: MyClass5
         self.match_partial_paths = match_partial_paths
         self.temperature = temperature
         self.port = port
-        self.ip = ip
 
     def _parse_model_return_lines(self, content: str) -> list[str]:
         if content:

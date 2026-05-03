@@ -6,6 +6,7 @@ from datasets import load_dataset
 
 from patchpilot.fl.FL import LLMFL
 from patchpilot.repair.repair import poc_info_prompt
+from patchpilot.reproduce.task import parse_task_list_file
 from patchpilot.util.preprocess_data import (
     filter_none_python,
     filter_out_test_files,
@@ -22,11 +23,6 @@ from get_repo_structure.get_repo_structure import (
 
 # SET THIS IF YOU WANT TO USE THE PREPROCESSED FILES
 PROJECT_STRUCTURE = os.environ.get("PROJECT_STRUCTURE", None)
-
-
-def parse_task_list_file(task_list_file: str) -> list[str]:
-    with open(task_list_file) as f:
-        return [x.strip() for x in f.readlines()]
 
 
 def store_reasoning_data(instance_id, prompt, trajs, args, id=-1, save_dir="", **kwargs):

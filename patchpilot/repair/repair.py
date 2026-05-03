@@ -14,11 +14,13 @@ from patchpilot.util.preprocess_data import (
     get_full_file_paths_and_classes_and_functions,
     get_repo_structure,
 )
-from patchpilot.util.utils import load_json, load_jsonl, setup_logger, ensure_directory_exists
+from patchpilot.util.utils import load_json, load_jsonl, setup_logger
 from patchpilot.repair.utils import (
     construct_topn_file_context,
     apply_patch_with_indent_alignment
 )
+from patchpilot.reproduce.reproduce import ensure_directory_exists
+from patchpilot.reproduce.task import parse_task_list_file
 
 reloca_ids = []
 reloca_locs = dict()
@@ -34,12 +36,6 @@ PROJECT_STRUCTURE = os.environ.get("PROJECT_STRUCTURE", None)
 num_generated_sample = 0
 round_idx = 0
 last_round = False
-
-
-def parse_task_list_file(task_list_file: str) -> list[str]:
-    with open(task_list_file) as f:
-        return [x.strip() for x in f.readlines()]
-
 
 planning_example_format = """
 Here is an example of the output format:
