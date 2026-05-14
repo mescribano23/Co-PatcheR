@@ -37,6 +37,49 @@ num_generated_sample = 0
 round_idx = 0
 last_round = False
 
+
+def extract_full_function_replacements(file_content):
+    """Extract whole Python functions from a MODIFIED FILE block.
+
+    CoPatcher asks models for SEARCH/REPLACE hunks. Small models sometimes
+    return a complete fixed function inside the file block instead. Recover
+    that simple case so useful responses do not become empty patches.
+    """
+    code_blocks = re.findall(r"```(?:python)?\s*(.*?)```", file_content, flags=re.DOTALL | re.IGNORECASE)
+    candidates = code_blocks or [file_content]
+    replacements = []
+    for candidate in candidates:
+        candidate = candidate.strip()
+        if not candidate:
+            continue
+        try:
+            tree = ast.parse(candidate)
+        except SyntaxError:
+            continue
+        for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                lines = candidate.splitlines()
+                replacement = "\n".join(lines[node.lineno - 1: node.end_lineno]).rstrip()
+                replacements.append({"name": node.name, "replace": replacement})
+    return replacements
+
+
+def replace_top_level_function(original_content, function_name, replacement):
+    if not function_name or not replacement:
+        return original_content
+    try:
+        tree = ast.parse(original_content)
+    except SyntaxError:
+        return original_content
+
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == function_name:
+            lines = original_content.splitlines()
+            before = lines[: node.lineno - 1]
+            after = lines[node.end_lineno:]
+            return "\n".join(before + replacement.splitlines() + after)
+    return original_content
+
 planning_example_format = """
 Here is an example of the output format:
 
@@ -591,16 +634,21 @@ def process_loc(loc, args, swe_bench_data, prev_generations):
                 "search": search_text,
                 "replace": replace_text
             })
+        full_function_replacements = []
+        if not modifications:
+            full_function_replacements = extract_full_function_replacements(file_content)
         found = False
         for item in modify_info:
             if item["file_path"] == file_path:
                 item["modifications"].extend(modifications)
+                item["full_function_replacements"].extend(full_function_replacements)
                 found = True
                 break
         if not found:
             modify_info.append({
                 "file_path": file_path,
-                "modifications": modifications
+                "modifications": modifications,
+                "full_function_replacements": full_function_replacements,
             })
 
     edited_files = []
@@ -617,6 +665,12 @@ def process_loc(loc, args, swe_bench_data, prev_generations):
             replace_text = mod.get("replace", "")
             if search_text != "":
                 new_file_content = apply_patch_with_indent_alignment(new_file_content, search_text, replace_text)
+        for mod in modify_file_info.get("full_function_replacements", []):
+            new_file_content = replace_top_level_function(
+                new_file_content,
+                mod.get("name", ""),
+                mod.get("replace", ""),
+            )
 
         edited_files.append(vul_file)
         contents.append(original_content)
